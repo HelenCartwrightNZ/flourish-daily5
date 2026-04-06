@@ -34,9 +34,6 @@ export default function HomeScreen({
 
   // Build 7 day dots (Mon–Sun of current ISO week)
   const weekDots = useMemo(() => {
-    const today_d = new Date()
-    const dayOfWeek = today_d.getDay() // 0=Sun
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
     const weekStart = getWeekStart()
     const todayStr = todayString()
 

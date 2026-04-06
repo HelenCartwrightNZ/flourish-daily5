@@ -9,7 +9,7 @@ import PillarModal from './PillarModal'
 import DeepDiveModal from './DeepDiveModal'
 import Toast from './Toast'
 import type { CheckIn, Profile, ActiveScreen, PillarKey } from '@/lib/types'
-import { todayString, getWeekStart } from '@/lib/utils'
+import { todayString } from '@/lib/utils'
 import { pillarOrder } from '@/lib/pillars'
 
 interface Props {

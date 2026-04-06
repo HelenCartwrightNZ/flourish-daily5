@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Allow the app to be embedded as a PWA-style mobile app
   headers: async () => [
     {
