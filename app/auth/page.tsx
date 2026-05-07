@@ -38,8 +38,17 @@ export default function AuthPage() {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       })
-      if (err) setError(err.message)
-      else setMessage('Check your email to confirm your account, then sign in.')
+      if (err) {
+        setError(err.message)
+      } else {
+        // Fire GHL welcome sequence — don't await, never blocks signup
+        fetch('/api/ghl-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, fullName }),
+        }).catch(() => {/* silent fail — signup always completes */})
+        setMessage('Check your email to confirm your account, then sign in.')
+      }
 
     } else if (mode === 'signin') {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password })
