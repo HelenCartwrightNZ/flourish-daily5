@@ -54,10 +54,9 @@ export default function ProfileScreen({ profile, userEmail, onNavChange, onShowT
             { tick: true, label: '7-day compliance view' },
             { tick: true, label: '4pm daily reminder' },
             { tick: true, label: 'Weekly summary' },
-            { tick: false, label: 'Monthly deep-dive insights' },
-            { tick: false, label: 'Hypnotic audio library (12 tracks)' },
-            { tick: false, label: 'SHED self-guided programme' },
-            { tick: false, label: 'Community — Brighter Tomorrows members' },
+            { tick: false, label: '🧠 Body — audio library & nervous system toolkit' },
+            { tick: false, label: '🛡️ Boundaries — SHED programme & monthly deep-dives' },
+            { tick: false, label: '💚 Belonging — private community & weekly calls with Helen' },
           ].map(({ tick, label }) => (
             <div key={label} className="tier-feature">
               <div className={tick ? 'feature-tick' : 'feature-lock'}>
