@@ -4,16 +4,24 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+type Mode = 'signin' | 'signup' | 'reset'
+
 export default function AuthPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+
+  function switchMode(next: Mode) {
+    setMode(next)
+    setError('')
+    setMessage('')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -22,7 +30,7 @@ export default function AuthPage() {
     setLoading(true)
 
     if (mode === 'signup') {
-      const { error: signupError } = await supabase.auth.signUp({
+      const { error: err } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -30,22 +38,20 @@ export default function AuthPage() {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       })
-      if (signupError) {
-        setError(signupError.message)
-      } else {
-        setMessage('Check your email to confirm your account, then sign in.')
-      }
-    } else {
-      const { error: signinError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      if (err) setError(err.message)
+      else setMessage('Check your email to confirm your account, then sign in.')
+
+    } else if (mode === 'signin') {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+      if (err) setError(err.message)
+      else { router.push('/dashboard'); router.refresh() }
+
+    } else if (mode === 'reset') {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/update-password`,
       })
-      if (signinError) {
-        setError(signinError.message)
-      } else {
-        router.push('/dashboard')
-        router.refresh()
-      }
+      if (err) setError(err.message)
+      else setMessage('Password reset email sent — check your inbox.')
     }
 
     setLoading(false)
@@ -81,27 +87,38 @@ export default function AuthPage() {
           </h1>
         </div>
 
-        <div className="auth-tabs">
-          <button
-            className={`auth-tab${mode === 'signin' ? ' active' : ''}`}
-            onClick={() => { setMode('signin'); setError(''); setMessage('') }}
-          >
-            Sign In
-          </button>
-          <button
-            className={`auth-tab${mode === 'signup' ? ' active' : ''}`}
-            onClick={() => { setMode('signup'); setError(''); setMessage('') }}
-          >
-            Create Account
-          </button>
-        </div>
+        {/* Tabs — hidden on reset screen */}
+        {mode !== 'reset' && (
+          <div className="auth-tabs">
+            <button
+              className={`auth-tab${mode === 'signin' ? ' active' : ''}`}
+              onClick={() => switchMode('signin')}
+            >
+              Sign In
+            </button>
+            <button
+              className={`auth-tab${mode === 'signup' ? ' active' : ''}`}
+              onClick={() => switchMode('signup')}
+            >
+              Create Account
+            </button>
+          </div>
+        )}
+
+        {mode === 'reset' && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 22, color: 'var(--navy)', marginBottom: 6 }}>
+              Reset your password
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--grey)', lineHeight: 1.6 }}>
+              Enter your email and we&apos;ll send you a reset link.
+            </div>
+          </div>
+        )}
 
         {error && <div className="auth-error">{error}</div>}
         {message && (
-          <div
-            className="auth-error"
-            style={{ background: 'rgba(107,143,113,0.1)', borderColor: 'var(--sage)', color: 'var(--sage)' }}
-          >
+          <div className="auth-error" style={{ background: 'rgba(107,143,113,0.1)', borderColor: 'var(--sage)', color: 'var(--sage)' }}>
             {message}
           </div>
         )}
@@ -116,7 +133,7 @@ export default function AuthPage() {
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 placeholder="Helen Cartwright"
-                required={mode === 'signup'}
+                required
                 autoComplete="name"
               />
             </div>
@@ -133,23 +150,61 @@ export default function AuthPage() {
               autoComplete="email"
             />
           </div>
-          <div className="auth-field">
-            <label className="auth-label">Password</label>
-            <input
-              className="auth-input"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder={mode === 'signup' ? 'At least 6 characters' : '••••••••'}
-              required
-              minLength={6}
-              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-            />
-          </div>
+          {mode !== 'reset' && (
+            <div className="auth-field">
+              <label className="auth-label">Password</label>
+              <input
+                className="auth-input"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder={mode === 'signup' ? 'At least 6 characters' : '••••••••'}
+                required
+                minLength={6}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              />
+            </div>
+          )}
+
           <button type="submit" className="auth-submit" disabled={loading}>
-            {loading ? 'Please wait…' : mode === 'signup' ? 'Create My Account' : 'Sign In'}
+            {loading
+              ? 'Please wait…'
+              : mode === 'signup'
+              ? 'Create My Account'
+              : mode === 'reset'
+              ? 'Send Reset Link'
+              : 'Sign In'}
           </button>
         </form>
+
+        {/* Forgot password link — only on sign in */}
+        {mode === 'signin' && (
+          <button
+            onClick={() => switchMode('reset')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--grey)', fontSize: 12, marginTop: 16,
+              display: 'block', width: '100%', textAlign: 'center',
+              fontFamily: 'Montserrat, sans-serif',
+            }}
+          >
+            Forgot your password?
+          </button>
+        )}
+
+        {mode === 'reset' && (
+          <button
+            onClick={() => switchMode('signin')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--grey)', fontSize: 12, marginTop: 16,
+              display: 'block', width: '100%', textAlign: 'center',
+              fontFamily: 'Montserrat, sans-serif',
+            }}
+          >
+            ← Back to sign in
+          </button>
+        )}
       </div>
 
       <p className="auth-brand">A Brighter Tomorrows programme</p>
