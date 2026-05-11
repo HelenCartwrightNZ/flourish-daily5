@@ -129,7 +129,7 @@ export default async function MembershipPage() {
           </div>
 
           <a
-            href="https://brightertomorrows.co.nz/membership"
+            href="https://buy.stripe.com/5kQ5kDdcv2CFaE9gZKbAs2O"
             style={{
               display: 'block',
               background: 'var(--gold)',
