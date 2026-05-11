@@ -22,7 +22,11 @@ export default function WeeklyScreen({ today, weekCheckIns, onNavChange, onOpenD
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart + 'T00:00:00')
       d.setDate(d.getDate() + i)
-      return d.toISOString().split('T')[0]
+      // Use local date parts — NOT toISOString() which is always UTC
+      const y = d.getFullYear()
+      const mo = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${mo}-${day}`
     })
   }, [weekStart])
 

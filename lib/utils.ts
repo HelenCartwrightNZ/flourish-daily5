@@ -7,7 +7,11 @@ export function getWeekStart(): string {
   const diff = day === 0 ? -6 : 1 - day // adjust so Monday is day 0
   const monday = new Date(now)
   monday.setDate(now.getDate() + diff)
-  return monday.toISOString().split('T')[0]
+  // Use local date parts — NOT toISOString() which is always UTC
+  const y = monday.getFullYear()
+  const m = String(monday.getMonth() + 1).padStart(2, '0')
+  const d = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 /**

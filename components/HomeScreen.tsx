@@ -40,7 +40,11 @@ export default function HomeScreen({
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart + 'T00:00:00')
       d.setDate(d.getDate() + i)
-      const dateKey = d.toISOString().split('T')[0]
+      // Use local date parts — NOT toISOString() which is always UTC
+      const y = d.getFullYear()
+      const mo = String(d.getMonth() + 1).padStart(2, '0')
+      const dy = String(d.getDate()).padStart(2, '0')
+      const dateKey = `${y}-${mo}-${dy}`
       const ci = weekCheckIns.find(c => c.date === dateKey)
       const total = ci ? pillarOrder.filter(k => ci[k]).length : 0
       const isToday = dateKey === todayStr
@@ -64,7 +68,11 @@ export default function HomeScreen({
     const d = new Date()
     d.setDate(d.getDate() - 1) // start from yesterday
     for (let i = 0; i < 30; i++) {
-      const dateKey = d.toISOString().split('T')[0]
+      // Use local date parts — NOT toISOString() which is always UTC
+      const y2 = d.getFullYear()
+      const mo2 = String(d.getMonth() + 1).padStart(2, '0')
+      const dy2 = String(d.getDate()).padStart(2, '0')
+      const dateKey = `${y2}-${mo2}-${dy2}`
       const ci = weekCheckIns.find(c => c.date === dateKey)
       if (ci && pillarOrder.filter(k => ci[k]).length >= 5) {
         count++
