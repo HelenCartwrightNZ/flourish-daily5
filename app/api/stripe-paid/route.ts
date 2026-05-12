@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-// App Router reads raw body via request.text() — no config needed
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2026-04-22.dahlia' as Parameters<typeof Stripe>[1]['apiVersion'],
+})
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Verify this is genuinely from Stripe
-  let event: Stripe.Event
+  let event: ReturnType<typeof stripe.webhooks.constructEvent>
   try {
     event = stripe.webhooks.constructEvent(
       rawBody,
@@ -25,18 +26,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // We care about two events:
-  // checkout.session.completed — one-time or first subscription payment
-  // customer.subscription.created — subscription confirmed
+  // We care about checkout.session.completed — fires when payment succeeds
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session
+    // Use loose typing to stay compatible across Stripe SDK versions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const session = event.data.object as any
 
-    const email = session.customer_details?.email ?? session.customer_email ?? ''
-    const name = session.customer_details?.name ?? ''
+    const email: string = session.customer_details?.email ?? session.customer_email ?? ''
+    const name: string = session.customer_details?.name ?? ''
     const firstName = name.split(' ')[0] ?? ''
     const lastName = name.split(' ').slice(1).join(' ') ?? ''
-    const customerId = typeof session.customer === 'string' ? session.customer : ''
-    const subscriptionId = typeof session.subscription === 'string' ? session.subscription : ''
+    const customerId: string = typeof session.customer === 'string' ? session.customer : ''
+    const subscriptionId: string = typeof session.subscription === 'string' ? session.subscription : ''
 
     if (email) {
       await notifyGHL({ email, name, firstName, lastName, customerId, subscriptionId })
