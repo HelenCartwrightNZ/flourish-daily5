@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-// Stripe requires the raw body for signature verification — disable body parsing
-export const config = { api: { bodyParser: false } }
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-04-30' })
+// App Router reads raw body via request.text() — no config needed
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
