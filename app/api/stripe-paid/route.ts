@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stripe = new (Stripe as any)(process.env.STRIPE_SECRET_KEY!)
+// Tell Next.js this route is always dynamic — never statically built
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  // Instantiate inside the handler so env vars are available at runtime, not build time
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stripe = new (Stripe as any)(process.env.STRIPE_SECRET_KEY!)
+
   const rawBody = await request.text()
   const signature = request.headers.get('stripe-signature')
 
@@ -13,7 +17,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Verify this is genuinely from Stripe
-  let event: ReturnType<typeof stripe.webhooks.constructEvent>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any
   try {
     event = stripe.webhooks.constructEvent(
       rawBody,
@@ -25,11 +30,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // We care about checkout.session.completed — fires when payment succeeds
+  // Fires when a Stripe checkout payment completes
   if (event.type === 'checkout.session.completed') {
-    // Use loose typing to stay compatible across Stripe SDK versions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const session = event.data.object as any
+    const session = event.data.object
 
     const email: string = session.customer_details?.email ?? session.customer_email ?? ''
     const name: string = session.customer_details?.name ?? ''
